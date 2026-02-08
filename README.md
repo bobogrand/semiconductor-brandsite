@@ -7,7 +7,7 @@
 
 ## Deployment 
 - github page : https://bobogrand.github.io/semiconductor-brandsite/
-
+- posthog : https://us.posthog.com/project/301326/ 
 ## Local
 First, run the development server: http://localhost:3000
 
