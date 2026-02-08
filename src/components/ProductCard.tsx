@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ProductItem, getSamsungThumbnailUrl } from "@/lib/api";
+import { ProductItem } from "@/lib/api";
 
 interface ProductCardProps {
   product: ProductItem;
@@ -7,19 +7,15 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, basePath }: ProductCardProps) {
-  const href = basePath
-    ? `${basePath}/${product.linkUrl.split("/").filter(Boolean).pop()}`
-    : product.linkUrl;
-
-  const imageUrl = getSamsungThumbnailUrl(product.thumbnailUrl);
+  const href = basePath ? `${basePath}/${product.slug}` : `/dram/ddr/ddr5/${product.slug}`;
 
   return (
     <Link href={href} className="group block">
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden transition-shadow hover:shadow-lg">
         <div className="aspect-[4/3] bg-gray-50 flex items-center justify-center p-6">
-          {imageUrl ? (
+          {product.thumbnailUrl ? (
             <img
-              src={imageUrl}
+              src={product.thumbnailUrl}
               alt={product.displayTitle || product.title}
               className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
               loading="lazy"
@@ -53,9 +49,9 @@ export default function ProductCard({ product, basePath }: ProductCardProps) {
               ))}
             </div>
           )}
-          {product.staticTag && product.staticTag.length > 0 && (
+          {product.tags && product.tags.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1">
-              {product.staticTag.slice(0, 3).map((tag, i) => (
+              {product.tags.slice(0, 3).map((tag, i) => (
                 <span
                   key={i}
                   className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs"

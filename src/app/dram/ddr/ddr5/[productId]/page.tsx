@@ -1,41 +1,11 @@
 import { notFound } from "next/navigation";
 import HeroBanner from "@/components/HeroBanner";
 import Breadcrumb from "@/components/Breadcrumb";
-import { getSamsungImageUrl, ProductItem } from "@/lib/api";
+import { fetchDdr5ProductBySlug, fetchDdr5ProductSlugs } from "@/lib/api";
 
-export function generateStaticParams() {
-  return [{ productId: "k4rah086ve-bcwm" }];
-}
-
-function getProductData(productId: string): ProductItem | null {
-  const products: Record<string, ProductItem> = {
-    "k4rah086ve-bcwm": {
-      title: "K4RAH086VE-BCWM",
-      description:
-        "Samsung 16Gb DDR5 SDRAM component offering high-speed data transfer for next-generation computing platforms. Designed for servers, workstations, and high-performance PCs requiring DDR5 memory technology.",
-      linkUrl: "/dram/ddr/ddr5/k4rah086ve-bcwm/",
-      thumbnailUrl:
-        "/content/dam/samsung/semiconductor/products/dram/ddr/ddr5/kv-ddr5-part-pd-ta.png",
-      displayTitle: "K4RAH086VE-BCWM",
-      displaySubCategory: "DDR5 DRAM",
-      keyImageUrl:
-        "/content/dam/samsung/semiconductor/products/dram/ddr/ddr5/kv-ddr5-part-pd-ta.png",
-      iaid: "111",
-      staticTag: ["DDR5", "DRAM", "16Gb", "Server", "PC"],
-      specfeatureList: [
-        { specName: "Density", specMinValue: "16 Gb", specMaxValue: "16 Gb" },
-        { specName: "Configuration", specMinValue: "2G x 8", specMaxValue: "2G x 8" },
-        { specName: "Speed", specMinValue: "5600 Mbps", specMaxValue: "5600 Mbps" },
-        { specName: "Voltage (VDD)", specMinValue: "1.1 V", specMaxValue: "1.1 V" },
-        { specName: "Operating Temperature", specMinValue: "0°C", specMaxValue: "85°C" },
-        { specName: "Package", specMinValue: "FBGA", specMaxValue: "FBGA" },
-      ],
-      stateCd: "A",
-      stateNm: "Active",
-    },
-  };
-
-  return products[productId.toLowerCase()] || null;
+export async function generateStaticParams() {
+  const slugs = await fetchDdr5ProductSlugs();
+  return slugs.map((slug) => ({ productId: slug }));
 }
 
 export default async function ProductDetailPage({
@@ -44,13 +14,11 @@ export default async function ProductDetailPage({
   params: Promise<{ productId: string }>;
 }) {
   const { productId } = await params;
-  const product = getProductData(productId);
+  const product = await fetchDdr5ProductBySlug(productId);
 
   if (!product) {
     notFound();
   }
-
-  const imageUrl = getSamsungImageUrl(product.keyImageUrl);
 
   return (
     <>
@@ -58,7 +26,7 @@ export default async function ProductDetailPage({
         title={product.displayTitle}
         subtitle={product.displaySubCategory}
         description={product.description}
-        imageUrl={imageUrl}
+        imageUrl={product.keyImageUrl || undefined}
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -73,9 +41,9 @@ export default async function ProductDetailPage({
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <div className="bg-gray-50 rounded-xl p-8 flex items-center justify-center">
-            {imageUrl ? (
+            {product.keyImageUrl ? (
               <img
-                src={imageUrl}
+                src={product.keyImageUrl}
                 alt={product.displayTitle}
                 className="max-w-full max-h-80 object-contain"
               />
@@ -91,12 +59,14 @@ export default async function ProductDetailPage({
               </h2>
               <span
                 className={`px-2 py-0.5 rounded text-xs font-medium ${
-                  product.stateCd === "A"
+                  product.status === "Active"
                     ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-600"
+                    : product.status === "New"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-gray-100 text-gray-600"
                 }`}
               >
-                {product.stateNm}
+                {product.status}
               </span>
             </div>
 
@@ -104,9 +74,9 @@ export default async function ProductDetailPage({
               {product.description}
             </p>
 
-            {product.staticTag && product.staticTag.length > 0 && (
+            {product.tags && product.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-8">
-                {product.staticTag.map((tag, i) => (
+                {product.tags.map((tag, i) => (
                   <span
                     key={i}
                     className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"

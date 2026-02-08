@@ -1,20 +1,9 @@
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || "";
-const SAMSUNG_SEARCH_API = process.env.NEXT_PUBLIC_SAMSUNG_SEARCH_API || "";
-const SAMSUNG_IMAGE_BASE = process.env.NEXT_PUBLIC_SAMSUNG_IMAGE_BASE || "";
+const STRAPI_READ_TOKEN = process.env.STRAPI_READ_TOKEN || "";
 
-export interface ProductItem {
-  title: string;
-  description: string;
-  linkUrl: string;
-  thumbnailUrl: string;
-  displayTitle: string;
-  displaySubCategory: string;
-  keyImageUrl: string;
-  iaid: string;
-  staticTag: string[] | null;
-  specfeatureList: SpecFeature[] | null;
-  stateCd: string;
-  stateNm: string;
+function strapiHeaders(): HeadersInit {
+  if (!STRAPI_READ_TOKEN) return {};
+  return { Authorization: `Bearer ${STRAPI_READ_TOKEN}` };
 }
 
 export interface SpecFeature {
@@ -23,77 +12,128 @@ export interface SpecFeature {
   specMaxValue: string;
 }
 
-export function getSamsungImageUrl(keyImageUrl: string): string {
-  if (!keyImageUrl) return "";
-  return `${SAMSUNG_IMAGE_BASE}${keyImageUrl}`;
+export interface ProductItem {
+  title: string;
+  slug: string;
+  description: string;
+  displayTitle: string;
+  displaySubCategory: string;
+  status: string;
+  tags: string[] | null;
+  specfeatureList: SpecFeature[] | null;
+  thumbnailUrl: string | null;
+  keyImageUrl: string | null;
 }
 
-export function getSamsungThumbnailUrl(thumbnailUrl: string): string {
-  if (!thumbnailUrl) return "";
-  return `${SAMSUNG_IMAGE_BASE}/semiconductor${thumbnailUrl}`;
+export interface Ddr5PageData {
+  title: string;
+  subtitle: string;
+  description: string;
+  heroImageUrl: string | null;
+  keyFeatures: { title: string; value: string; description: string }[];
 }
 
-export async function fetchProducts(
-  filter?: string,
-  num: number = 100
-): Promise<ProductItem[]> {
+function getStrapiMediaUrl(media: Record<string, unknown> | null): string | null {
+  if (!media) return null;
+  const url = (media as { url?: string }).url;
+  if (!url) return null;
+  if (url.startsWith("http")) return url;
+  return `${STRAPI_API_URL}${url}`;
+}
+
+// -- DDR5 Page (Single Type) --
+
+export async function fetchDdr5Page(): Promise<Ddr5PageData | null> {
   try {
-    const filterParam = filter ? `&filter=${encodeURIComponent(filter)}` : "";
     const res = await fetch(
-      `${SAMSUNG_SEARCH_API}?q=&site=semi&num=${num}&pageno=1&category=products&stage=live${filterParam}&hashtagFlag=N`,
-      { next: { revalidate: 3600 } }
+      `${STRAPI_API_URL}/api/ddr5-page?populate=*`,
+      { headers: strapiHeaders(), next: { revalidate: 3600 } }
     );
-    const data = await res.json();
-    const contentList =
-      data?.response?.resultData?.resultList?.[0]?.contentList || [];
-    return contentList.map((item: Record<string, unknown>) => ({
-      title: item.title || "",
-      description: item.description || "",
-      linkUrl: item.linkUrl || "",
-      thumbnailUrl: item.thumbnailUrl || "",
-      displayTitle: item.displayTitle || "",
-      displaySubCategory: item.displaySubCategory || "",
-      keyImageUrl: item.keyImageUrl || "",
-      iaid: item.iaid || "",
-      staticTag: item.staticTag || null,
-      specfeatureList: item.specfeatureList || null,
-      stateCd: item.stateCd || "",
-      stateNm: item.stateNm || "",
-    }));
+    if (!res.ok) return null;
+    const json = await res.json();
+    const d = json.data;
+    if (!d) return null;
+    return {
+      title: d.title || "DDR5",
+      subtitle: d.subtitle || "",
+      description: d.description || "",
+      heroImageUrl: getStrapiMediaUrl(d.heroImage),
+      keyFeatures: (d.keyFeatures || []).map(
+        (f: { title: string; value: string; description: string }) => ({
+          title: f.title,
+          value: f.value,
+          description: f.description || "",
+        })
+      ),
+    };
   } catch (error) {
-    console.error("Failed to fetch products:", error);
-    return [];
-  }
-}
-
-export async function fetchStrapiContent(endpoint: string) {
-  try {
-    const res = await fetch(`${STRAPI_API_URL}/api/${endpoint}`, {
-      next: { revalidate: 3600 },
-    });
-    return await res.json();
-  } catch (error) {
-    console.error(`Failed to fetch from Strapi (${endpoint}):`, error);
+    console.error("Failed to fetch DDR5 page:", error);
     return null;
   }
 }
 
-export function filterProductsByCategory(
-  products: ProductItem[],
-  category: string
-): ProductItem[] {
-  return products.filter((p) =>
-    p.linkUrl.toLowerCase().includes(`/${category.toLowerCase()}/`)
-  );
+// -- DDR5 Products (Collection Type) --
+
+function mapStrapiProduct(item: Record<string, unknown>): ProductItem {
+  return {
+    title: (item.title as string) || "",
+    slug: (item.slug as string) || "",
+    description: (item.description as string) || "",
+    displayTitle: (item.displayTitle as string) || "",
+    displaySubCategory: (item.displaySubCategory as string) || "",
+    status: (item.status as string) || "Active",
+    tags: (item.tags as string[]) || null,
+    specfeatureList: (item.specfeatures as SpecFeature[]) || null,
+    thumbnailUrl: getStrapiMediaUrl(item.thumbnail as Record<string, unknown> | null),
+    keyImageUrl: getStrapiMediaUrl(item.keyImage as Record<string, unknown> | null),
+  };
 }
 
-export function getProductBySlug(
-  products: ProductItem[],
+export async function fetchDdr5Products(): Promise<ProductItem[]> {
+  try {
+    const res = await fetch(
+      `${STRAPI_API_URL}/api/ddr5-products?populate=*&pagination[pageSize]=100`,
+      { headers: strapiHeaders(), next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return [];
+    const json = await res.json();
+    return (json.data || []).map(mapStrapiProduct);
+  } catch (error) {
+    console.error("Failed to fetch DDR5 products:", error);
+    return [];
+  }
+}
+
+export async function fetchDdr5ProductBySlug(
   slug: string
-): ProductItem | undefined {
-  return products.find((p) => {
-    const parts = p.linkUrl.split("/").filter(Boolean);
-    const lastPart = parts[parts.length - 1];
-    return lastPart?.toLowerCase() === slug.toLowerCase();
-  });
+): Promise<ProductItem | null> {
+  try {
+    const res = await fetch(
+      `${STRAPI_API_URL}/api/ddr5-products?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`,
+      { headers: strapiHeaders(), next: { revalidate: 3600 } }
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    const items = json.data || [];
+    if (items.length === 0) return null;
+    return mapStrapiProduct(items[0]);
+  } catch (error) {
+    console.error(`Failed to fetch product (${slug}):`, error);
+    return null;
+  }
+}
+
+export async function fetchDdr5ProductSlugs(): Promise<string[]> {
+  try {
+    const res = await fetch(
+      `${STRAPI_API_URL}/api/ddr5-products?fields[0]=slug&pagination[pageSize]=100`,
+      { headers: strapiHeaders() }
+    );
+    if (!res.ok) return [];
+    const json = await res.json();
+    return (json.data || []).map((item: { slug: string }) => item.slug);
+  } catch (error) {
+    console.error("Failed to fetch product slugs:", error);
+    return [];
+  }
 }
