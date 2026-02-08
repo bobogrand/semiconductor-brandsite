@@ -53,21 +53,10 @@ export default async function ProductDetailPage({
           </div>
 
           <div>
-            <div className="flex items-center gap-3 mb-4">
+            <div className="mb-4">
               <h2 className="text-2xl font-bold text-gray-900">
                 {product.displayTitle}
               </h2>
-              <span
-                className={`px-2 py-0.5 rounded text-xs font-medium ${
-                  product.status === "Active"
-                    ? "bg-green-100 text-green-700"
-                    : product.status === "New"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-gray-100 text-gray-600"
-                }`}
-              >
-                {product.status}
-              </span>
             </div>
 
             <p className="text-gray-500 leading-relaxed mb-8">

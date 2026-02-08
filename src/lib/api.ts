@@ -18,7 +18,6 @@ export interface ProductItem {
   description: string;
   displayTitle: string;
   displaySubCategory: string;
-  status: string;
   tags: string[] | null;
   specfeatureList: SpecFeature[] | null;
   thumbnailUrl: string | null;
@@ -81,7 +80,6 @@ function mapStrapiProduct(item: Record<string, unknown>): ProductItem {
     description: (item.description as string) || "",
     displayTitle: (item.displayTitle as string) || "",
     displaySubCategory: (item.displaySubCategory as string) || "",
-    status: (item.status as string) || "Active",
     tags: (item.tags as string[]) || null,
     specfeatureList: (item.specfeatures as SpecFeature[]) || null,
     thumbnailUrl: getStrapiMediaUrl(item.thumbnail as Record<string, unknown> | null),
