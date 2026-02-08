@@ -1,65 +1,112 @@
-import Image from "next/image";
+import Link from "next/link";
+import HeroBanner from "@/components/HeroBanner";
+
+const PRODUCT_CATEGORIES = [
+  {
+    name: "DRAM",
+    description:
+      "Industry-leading DRAM solutions for servers, PCs, mobile devices, and more.",
+    href: "/dram",
+    subItems: ["DDR", "LPDDR", "GDDR", "HBM", "Module"],
+  },
+  {
+    name: "SSD",
+    description:
+      "High-performance solid state drives for enterprise, data center, and consumer applications.",
+    href: "#",
+    subItems: ["PC SSD", "Enterprise SSD", "Datacenter SSD"],
+  },
+  {
+    name: "eStorage",
+    description:
+      "Embedded storage solutions including UFS and eMMC for mobile and IoT devices.",
+    href: "#",
+    subItems: ["UFS", "eMMC"],
+  },
+  {
+    name: "CXL Memory",
+    description:
+      "Next-generation CXL memory solutions for data center expansion.",
+    href: "#",
+    subItems: ["CMM-D"],
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <>
+      <HeroBanner
+        title="Memory & Storage Solutions"
+        subtitle="Samsung Semiconductor"
+        description="Pushing the boundaries of what's possible with industry-leading semiconductor technology. From DRAM to SSD, we power the future."
+      />
+
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Products</h2>
+        <p className="text-gray-500 mb-10">
+          Explore our comprehensive product lineup
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {PRODUCT_CATEGORIES.map((cat) => (
+            <Link
+              key={cat.name}
+              href={cat.href}
+              className="group block bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg hover:border-blue-200 transition-all"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                {cat.name}
+              </h3>
+              <p className="mt-2 text-sm text-gray-500 leading-relaxed">
+                {cat.description}
+              </p>
+              <div className="mt-4 flex flex-wrap gap-1">
+                {cat.subItems.map((sub) => (
+                  <span
+                    key={sub}
+                    className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs"
+                  >
+                    {sub}
+                  </span>
+                ))}
+              </div>
+            </Link>
+          ))}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      <section className="bg-gray-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-10 text-center">
+            Why Samsung Semiconductor?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                title: "Innovation",
+                desc: "Pioneering next-generation memory technologies including HBM3E, DDR5, and CXL.",
+              },
+              {
+                title: "Performance",
+                desc: "Delivering industry-leading speed, capacity, and power efficiency across all product lines.",
+              },
+              {
+                title: "Reliability",
+                desc: "Trusted by global enterprises for mission-critical applications and infrastructure.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="text-center">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {item.title}
+                </h3>
+                <p className="text-gray-500 text-sm leading-relaxed">
+                  {item.desc}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </>
   );
 }
