@@ -4,10 +4,20 @@ import { ProductItem } from "@/lib/api";
 interface ProductCardProps {
   product: ProductItem;
   basePath?: string;
+  /** true면 상세 링크를 basePath?slug=xxx 로 생성 (정적 호스팅용) */
+  slugAsQuery?: boolean;
 }
 
-export default function ProductCard({ product, basePath }: ProductCardProps) {
-  const href = basePath ? `${basePath}/${product.slug}` : `/dram/ddr/ddr5/${product.slug}`;
+export default function ProductCard({
+  product,
+  basePath,
+  slugAsQuery,
+}: ProductCardProps) {
+  const href = slugAsQuery
+    ? `${basePath || "/dram/ddr/ddr5/product"}?slug=${encodeURIComponent(product.slug)}`
+    : basePath
+      ? `${basePath}/${product.slug}`
+      : `/dram/ddr/ddr5/product?slug=${encodeURIComponent(product.slug)}`;
 
   return (
     <Link href={href} className="group block">

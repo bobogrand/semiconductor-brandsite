@@ -1,23 +1,66 @@
-import { notFound } from "next/navigation";
+"use client";
+
+import { Suspense, useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import HeroBanner from "@/components/HeroBanner";
 import Breadcrumb from "@/components/Breadcrumb";
-import { fetchDdr5ProductBySlug, fetchDdr5ProductSlugs } from "@/lib/api";
+import { fetchDdr5ProductBySlug, type ProductItem } from "@/lib/api";
 
-export async function generateStaticParams() {
-  const slugs = await fetchDdr5ProductSlugs();
-  return slugs.map((slug) => ({ productId: slug }));
-}
+function ProductDetailContent() {
+  const searchParams = useSearchParams();
+  const slug = useMemo(
+    () => searchParams.get("slug") ?? "",
+    [searchParams]
+  );
 
-export default async function ProductDetailPage({
-  params,
-}: {
-  params: Promise<{ productId: string }>;
-}) {
-  const { productId } = await params;
-  const product = await fetchDdr5ProductBySlug(productId);
+  const [product, setProduct] = useState<ProductItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  if (!product) {
-    notFound();
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+    const run = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const data = await fetchDdr5ProductBySlug(slug);
+        if (!cancelled) setProduct(data ?? null);
+      } catch (err) {
+        if (!cancelled)
+          setError(err instanceof Error ? err.message : "Failed to load product");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  if (!slug) {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center">
+        <p className="text-red-600">Missing product slug</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center">
+        <p className="text-red-600">{error || "Product not found"}</p>
+      </div>
+    );
   }
 
   return (
@@ -87,7 +130,9 @@ export default async function ProductDetailPage({
                       {product.specfeatureList.map((spec, i) => (
                         <tr
                           key={i}
-                          className={i % 2 === 0 ? "bg-gray-50" : "bg-white"}
+                          className={
+                            i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          }
                         >
                           <td className="px-4 py-3 text-sm font-medium text-gray-600 w-1/3">
                             {spec.specName}
@@ -108,5 +153,19 @@ export default async function ProductDetailPage({
         </div>
       </div>
     </>
+  );
+}
+
+export default function ProductDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[40vh] flex items-center justify-center">
+          <p className="text-gray-500">Loading...</p>
+        </div>
+      }
+    >
+      <ProductDetailContent />
+    </Suspense>
   );
 }

@@ -1,9 +1,16 @@
+// 브라우저에서 fetch 하므로 반드시 NEXT_PUBLIC_* 만 사용 (빌드 시 번들에 포함됨)
 const STRAPI_API_URL = process.env.NEXT_PUBLIC_STRAPI_API_URL || "";
-const STRAPI_READ_TOKEN = process.env.STRAPI_READ_TOKEN || "";
 
 function strapiHeaders(): HeadersInit {
-  if (!STRAPI_READ_TOKEN) return {};
-  return { Authorization: `Bearer ${STRAPI_READ_TOKEN}` };
+  const token =
+    process.env.NEXT_PUBLIC_STRAPI_READ_TOKEN ||
+    process.env.STRAPI_READ_TOKEN ||
+    "";
+  return {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
 }
 
 export interface SpecFeature {
@@ -46,7 +53,7 @@ export async function fetchDdr5Page(): Promise<Ddr5PageData | null> {
   try {
     const res = await fetch(
       `${STRAPI_API_URL}/api/ddr5-page?populate=*`,
-      { headers: strapiHeaders(), next: { revalidate: 3600 } }
+      { headers: strapiHeaders(), cache: "no-store" }
     );
     if (!res.ok) return null;
     const json = await res.json();
@@ -91,7 +98,7 @@ export async function fetchDdr5Products(): Promise<ProductItem[]> {
   try {
     const res = await fetch(
       `${STRAPI_API_URL}/api/ddr5-products?populate=*&pagination[pageSize]=100`,
-      { headers: strapiHeaders(), next: { revalidate: 3600 } }
+      { headers: strapiHeaders(), cache: "no-store" }
     );
     if (!res.ok) return [];
     const json = await res.json();
@@ -108,7 +115,7 @@ export async function fetchDdr5ProductBySlug(
   try {
     const res = await fetch(
       `${STRAPI_API_URL}/api/ddr5-products?filters[slug][$eq]=${encodeURIComponent(slug)}&populate=*`,
-      { headers: strapiHeaders(), next: { revalidate: 3600 } }
+      { headers: strapiHeaders(), cache: "no-store" }
     );
     if (!res.ok) return null;
     const json = await res.json();

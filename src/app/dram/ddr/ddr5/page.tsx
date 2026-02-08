@@ -1,13 +1,59 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import HeroBanner from "@/components/HeroBanner";
 import Breadcrumb from "@/components/Breadcrumb";
 import ProductCard from "@/components/ProductCard";
-import { fetchDdr5Page, fetchDdr5Products } from "@/lib/api";
+import {
+  fetchDdr5Page,
+  fetchDdr5Products,
+  type Ddr5PageData,
+  type ProductItem,
+} from "@/lib/api";
 
-export default async function Ddr5Page() {
-  const [pageData, products] = await Promise.all([
-    fetchDdr5Page(),
-    fetchDdr5Products(),
-  ]);
+export default function Ddr5Page() {
+  const [pageData, setPageData] = useState<Ddr5PageData | null>(null);
+  const [products, setProducts] = useState<ProductItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.all([fetchDdr5Page(), fetchDdr5Products()])
+      .then(([page, list]) => {
+        if (!cancelled) {
+          setPageData(page ?? null);
+          setProducts(list ?? []);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err?.message ?? "Failed to load data");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[40vh] flex items-center justify-center">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
 
   const title = pageData?.title || "DDR5";
   const subtitle = pageData?.subtitle || "DRAM / DDR";
@@ -69,7 +115,8 @@ export default async function Ddr5Page() {
             <ProductCard
               key={product.slug}
               product={product}
-              basePath="/dram/ddr/ddr5"
+              basePath="/dram/ddr/ddr5/product"
+              slugAsQuery
             />
           ))}
         </div>
